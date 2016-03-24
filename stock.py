@@ -7,6 +7,7 @@ sys.setdefaultencoding('utf-8')
 from stock import trading as td
 from db.db import Db
 from util import dateu as du
+from util import logger
 
 '''
 stock data
@@ -39,6 +40,7 @@ class Stock():
     def insert_today_trade(self):
         self.set_data()
         db = Db()
+
         conn,cur = db._getPGcur()
         gta = td.get_today_all()
         gta['datain_date']=self.nowtime
@@ -54,16 +56,23 @@ class Stock():
         conn.close()
 
 
+
 if __name__ == "__main__":
     stock = Stock()
-
-    # gta= stock.get_today_all().head()
-    # gta['C_YEARMONTHDAY']='2015-01-01'
-    # print(gta)
-    if(not du.is_holiday(stock.getNowdate())):
-        print('workday')
-        stock.insert_today_trade()
-    else:
-        print('holiday')
+    logger.install({
+        'root': {
+            'filename': {'DEBUG':"log/debug.log", 'ERROR':'log/err.log'},
+        },
+    })
+    log=logger.log
+    try:
+        if(not du.is_holiday(stock.getNowdate())):
+            log.info('今天是工作日正在同步股票交易数据 .....')
+            stock.insert_today_trade()
+            log.info('同步完成')
+        else:
+            log.info('今天是假期，不进行同步数据')
+    except Exception ,e:
+        log.error('同步数据失败:%s',e)
 
 
