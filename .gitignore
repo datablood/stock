@@ -1,0 +1,14 @@
+# ignore packages installed by npm
+#node_modules*
+
+# put any other files you don't want to check in here,
+# such as .DS_Store (OSX), *.bak, etc.
+.DS_Store
+*.bak
+*.pyc
+.idea
+# don't commit log files
+log
+
+# ignore uploaded data
+data
