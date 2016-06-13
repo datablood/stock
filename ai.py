@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # model.add(Activation('relu'))
 
     # model.compile(optimizer='rmsprop',
-    #               loss='binary_crossentropy',
+    #                loss='binary_crossentropy',
     #                metrics=['accuracy'])
 
     from data import trade
