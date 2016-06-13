@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     # model.compile(optimizer='rmsprop',
     #               loss='binary_crossentropy',
-    #               metrics=['accuracy'])
+    #                metrics=['accuracy'])
 
     from data import trade
     trade.get_histdata(seg_len=timesteps,
