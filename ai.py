@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     # VGG-like
     # input: 13*13 images with 3 channels -> (3, 13, 13) tensors.
-    # this applies 32 convolution filters of size 3x3 each.
+    # this applies 32 convolution filters of size 2x2 each.
     # nb_filter+nb_row-1<=timesteps+data_dim-1
     nb_filter = 8
     nb_row = 2
