@@ -1,3 +1,3 @@
- #!/bin/bash
-运行etl
+#!/bin/bash
+# 运行etl
 python /root/stock/stock.py

@@ -11,7 +11,6 @@
 log
 
 # ignore uploaded data
-data
 *.h5
 *.pkl
 db_settings.py

@@ -1,11 +1,13 @@
 from util import logger
 import six.moves.cPickle as pickle
+import os
 
 if __name__ == "__main__":
+    USER_HOME = os.environ['HOME']
     logger.install({
         'root': {
-            'filename': {'DEBUG': "log/debug.log",
-                         'ERROR': 'log/err.log'},
+            'filename': {'DEBUG': USER_HOME + "/log/debug.log",
+                         'ERROR': USER_HOME + "/log/err.log"},
         },
     })
     log = logger.log
@@ -57,12 +59,12 @@ if __name__ == "__main__":
     trade.get_histdata(seg_len=timesteps,
                        datatype='cnn',
                        split=0.05,
-                       debug=False)
+                       debug=True)
     (x_train, y_train, id_train), (x_valid, y_valid, id_valid) = pickle.load(
         open('cnn_seg' + str(timesteps) + '.pkl', 'rb'))
     # x_train=np_utils.normalize(x_train)
     # x_valid=np_utils.normalize(x_valid)
-    print('y_train value',type(y_train[0]),y_train[0],type(y_train))
+    print('y_train value', type(y_train[0]), y_train[0], type(y_train))
     # y_train=np_utils.to_categorical(y_train,nb_classes)
     # y_valid=np_utils.to_categorical(y_valid,nb_classes)
 
@@ -114,5 +116,5 @@ if __name__ == "__main__":
               batch_size=32,
               nb_epoch=20,
               validation_data=(x_valid, y_valid))
-    print (model.predict( x_valid, batch_size=8, verbose=0))
+    print(model.predict(x_valid, batch_size=8, verbose=0))
     model.save_weights('cnn_seg' + str(timesteps) + '.h5', overwrite=True)
