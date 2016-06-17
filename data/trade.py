@@ -78,7 +78,7 @@ def get_hist6years(split=0.2,
                 Y_train.append(temp_y)
         k += 1
         samples = 5
-        if ((k % samples) & ((len(stockcodes) - k) <= samples)) == 0:
+        if ((k % samples) & ((len(stockcodes) - k) > samples)) == 0:
             log.info('%s stock finished ', k)
             yield ((np.asarray(X_train), np.asarray(Y_train),
                     np.asarray(ID_train)),
