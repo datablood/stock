@@ -47,13 +47,12 @@ if __name__ == "__main__":
     #               metrics=['accuracy'])
 
     datatype = 'lstm'
-    datafile = USER_HOME + '/dw/' + datatype + '_seg' + str(timesteps) + '.pkl'
+    # datafile = USER_HOME + '/dw/' + datatype + '_seg' + str(timesteps) + '.pkl'
     from data import trade
     temp_hist = trade.get_hist6years(seg_len=timesteps,
                                      datatype=datatype,
                                      split=0.1,
-                                     debug=False,
-                                     datafile=datafile)
+                                     debug=False)
     # (x_train, y_train, id_train), (
     #     x_valid, y_valid, id_valid) = pickle.load(open(datafile, 'rb'))
     # x_train=np_utils.normalize(x_train)
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         # vgg end
 
         # lstm for a binary classification problem
-        model.load_weights(USER_HOME + '/dw/' + 'datatype' + '_seg' + str(
+        model.load_weights(USER_HOME + '/dw/' + datatype + '_seg' + str(
             timesteps) + '.h5')
         # lstm end
 
@@ -142,7 +141,7 @@ if __name__ == "__main__":
         log.info('Test score:%s', score[0])
         log.info('Test accuracy:%s', score[1])
         model.save_weights(
-            USER_HOME + '/dw/' + 'datatype' + '_seg' + str(timesteps) + '.h5',
+            USER_HOME + '/dw/' + datatype + '_seg' + str(timesteps) + '.h5',
             overwrite=True)
     cost_time=time.clock()-s_time
     log.info('train spent time : %s',cost_time)
