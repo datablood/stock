@@ -136,7 +136,7 @@ def get_hist6years(split=0.2,
                 ID_train.append(temp_id)
                 Y_train.append(temp_y)
         k += 1
-        samples = 20
+        samples = 10
         if k % samples == 0:
             print k
             log.info('%s stock finished ', k)
