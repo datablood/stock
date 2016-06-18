@@ -101,8 +101,8 @@ def get_hist6years(split=0.2,
             log.info('not enough trade days ,code is :%s', codes)
             continue
 
-        # validdays = np.round(split * len(tradedaylist))
-        validdays = 2
+        validdays = np.round(split * len(tradedaylist))
+        # validdays = 2
 
         i = 0
         for day in tradedaylist:
@@ -136,7 +136,7 @@ def get_hist6years(split=0.2,
                 ID_train.append(temp_id)
                 Y_train.append(temp_y)
         k += 1
-        samples = 10
+        samples = 30
         if k % samples == 0:
             print k
             log.info('%s stock finished ', k)
@@ -173,7 +173,7 @@ def get_hist6years(split=0.2,
     #     open(datafile, 'wb'))
 
 
-def get_histdata(split=0.2, seg_len=3, debug=False, datatype='cnn'):
+def get_histdata(split=0.15, seg_len=3, debug=False, datatype='cnn'):
     db = Db()
     engine = db._get_engine()
     sql_stocklist = "select  * from trade_record where code in (select code  from trade_record  where high<>0.0 and low <>0.0 group by code having count(code)=(select count(distinct c_yearmonthday) from trade_record))"

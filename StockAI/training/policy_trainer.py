@@ -8,7 +8,7 @@ import pandas as pd
 def train(timesteps, datatype, debug):
     USER_HOME = os.environ['HOME']
     log = logger.log
-    network = policy.LSTMPolicy.create_network()
+    network = policy.LSTMPolicy.create_network(timesteps=timesteps)
 
     datatype = 'lstm'
     hist6years = trade.get_hist6years(seg_len=timesteps,
@@ -26,8 +26,10 @@ def train(timesteps, datatype, debug):
         # y_valid=np_utils.to_categorical(y_valid,nb_classes)
 
         # lstm for a binary classification problem
-        network.load_weights(USER_HOME + '/dw/' + datatype + '_seg' + str(
-            timesteps) + '.h5')
+        weights_path = USER_HOME + '/dw/' + datatype + '_seg' + str(
+            timesteps) + '.h5'
+        if os.path.exists(weights_path):
+            network.load_weights(weights_path)
         # lstm end
 
         network.fit(x_train,
@@ -44,6 +46,4 @@ def train(timesteps, datatype, debug):
         score = network.evaluate(x_valid, y_valid, verbose=0)
         log.info('Test score:%s', score[0])
         log.info('Test accuracy:%s', score[1])
-        network.save_weights(
-            USER_HOME + '/dw/' + datatype + '_seg' + str(timesteps) + '.h5',
-            overwrite=True)
+        network.save_weights(weights_path, overwrite=True)

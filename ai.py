@@ -50,7 +50,8 @@ if __name__ == "__main__":
     log = logger.log
     t_time = time.clock()
     data_dim = 14
-    timesteps = 128
+    # 7,15
+    timesteps = 15
     # nb_classes = 5
     datatype = 'lstm'
     policy_trainer.train(timesteps, datatype, debug=False)
