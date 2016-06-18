@@ -4,9 +4,67 @@ from db.db import Db
 from util import logger
 import numpy as np
 import time
-log = logger.log
 import six.moves.cPickle as pickle
 import pandas as pd
+
+
+def get_today(split=0.2,
+              seg_len=3,
+              debug=False,
+              datatype='cnn',
+              datafile=None):
+    log = logger.log
+    db = Db()
+    engine = db._get_engine()
+    sql_stocklist = "select  * from trade_hist where code in (select code  from trade_hist  where high<>0.0 and low <>0.0 group by code having count(code)>100)"
+    if debug:
+        sql_stocklist += " and code in ('002717','601888','002405')"
+    df = pd.read_sql_query(sql_stocklist, engine)
+    stockcodes = df['code'].unique()
+    print stockcodes
+
+    X_predict = []
+    ID_predict = []
+    NAME_predict = []
+    log.info('begin generate train data and validate data.')
+    k = 0
+    for codes in stockcodes:
+        temp_df = df[df.code == codes]
+
+        tradedaylist = temp_df.copy(deep=True)['c_yearmonthday'].values
+        tradedaylist.sort()
+        tradedaylist = tradedaylist[::-1]
+        if len(tradedaylist) < seg_len:
+            log.info('not enough trade days ,code is :%s', codes)
+            continue
+
+        i = 0
+        segdays = tradedaylist[i:i + seg_len]
+        if len(segdays) < seg_len:
+            break
+        data = []
+        SEG_X = []
+        for segday in segdays:
+            data = temp_df[temp_df.c_yearmonthday == segday][
+                ['open', 'high', 'close', 'low', 'volume', 'price_change',
+                 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
+                 'v_ma20', 'turnover']]
+            data = data.values
+            SEG_X.append(data[0])
+        if datatype == 'cnn':
+            SEG_X = [SEG_X]
+        data_tag = temp_df[temp_df.c_yearmonthday == tradedaylist[0]][
+            ['code', 'name', 'p_change']]
+        temp_y = data_tag['p_change'].values[0]
+        temp_y = to_cate01(temp_y)
+        temp_id = data_tag['code'].values[0]
+        temp_name = data_tag['name'].values[0]
+        X_predict.append(SEG_X)
+        ID_predict.append(temp_id)
+        NAME_predict.append(temp_name)
+        k += 1
+        log.info('%s stock finished ', k)
+    return (np.asarray(X_predict), np.asarray(ID_predict),np.asarray(NAME_predict))
 
 
 def get_hist6years(split=0.2,
@@ -14,6 +72,7 @@ def get_hist6years(split=0.2,
                    debug=False,
                    datatype='cnn',
                    datafile=None):
+    log = logger.log
     db = Db()
     engine = db._get_engine()
     sql_stocklist = "select  * from trade_hist where code in (select code  from trade_hist  where high<>0.0 and low <>0.0 group by code having count(code)>100)"
@@ -77,7 +136,7 @@ def get_hist6years(split=0.2,
                 ID_train.append(temp_id)
                 Y_train.append(temp_y)
         k += 1
-        samples = 5
+        samples = 20
         if k % samples == 0:
             print k
             log.info('%s stock finished ', k)
