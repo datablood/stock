@@ -55,8 +55,6 @@ def get_today(split=0.2,
             SEG_X = [SEG_X]
         data_tag = temp_df[temp_df.c_yearmonthday == tradedaylist[0]][
             ['code', 'name', 'p_change']]
-        temp_y = data_tag['p_change'].values[0]
-        temp_y = to_cate01(temp_y)
         temp_id = data_tag['code'].values[0]
         temp_name = data_tag['name'].values[0]
         X_predict.append(SEG_X)
@@ -64,14 +62,16 @@ def get_today(split=0.2,
         NAME_predict.append(temp_name)
         k += 1
         log.info('%s stock finished ', k)
-    return (np.asarray(X_predict), np.asarray(ID_predict),np.asarray(NAME_predict))
+    return (np.asarray(X_predict), np.asarray(ID_predict),
+            np.asarray(NAME_predict))
 
 
 def get_hist6years(split=0.2,
                    seg_len=3,
                    debug=False,
                    datatype='cnn',
-                   datafile=None):
+                   datafile=None,
+                   predict_days=18):
     log = logger.log
     db = Db()
     engine = db._get_engine()
@@ -91,6 +91,7 @@ def get_hist6years(split=0.2,
     log.info('begin generate train data and validate data.')
     begin_time = time.clock()
     k = 0
+    predict_days = predict_days
     for codes in stockcodes:
         temp_df = df[df.code == codes]
 
@@ -107,7 +108,7 @@ def get_hist6years(split=0.2,
         i = 0
         for day in tradedaylist:
             i += 1
-            segdays = tradedaylist[i:i + seg_len]
+            segdays = tradedaylist[i + predict_days:i + predict_days + seg_len]
             if len(segdays) < seg_len:
                 break
             SEG_X = []
@@ -122,10 +123,18 @@ def get_hist6years(split=0.2,
             # SEG_X=np.array(SEG_X).T
             if datatype == 'cnn':
                 SEG_X = [SEG_X]
-            data_tag = temp_df[temp_df.c_yearmonthday == day][
-                ['code', 'name', 'p_change']]
-            temp_y = data_tag['p_change'].values[0]
+            d1 = tradedaylist[i - 1]
+            d3 = tradedaylist[i + predict_days - 1]
+            # print d1, d3, segdays
+            data_tag = temp_df[temp_df.c_yearmonthday == d1][
+                ['code', 'name', 'p_change', 'close']]
+            data_tag3 = temp_df[temp_df.c_yearmonthday == d3][
+                ['code', 'name', 'p_change', 'close']]
+            temp_y = data_tag['close'].values[0]
+            temp_y3 = data_tag3['close'].values[0]
+            temp_y = (temp_y - temp_y3) / temp_y3
             temp_y = to_cate01(temp_y)
+            # print 'tempy:', temp_y
             temp_id = data_tag['code'].values[0]
             if (i > 0 and i <= validdays):
                 X_valid.append(SEG_X)
@@ -136,7 +145,7 @@ def get_hist6years(split=0.2,
                 ID_train.append(temp_id)
                 Y_train.append(temp_y)
         k += 1
-        samples = 30
+        samples = 10
         if k % samples == 0:
             print k
             log.info('%s stock finished ', k)

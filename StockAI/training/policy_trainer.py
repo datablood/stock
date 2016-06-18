@@ -5,7 +5,7 @@ import os
 import pandas as pd
 
 
-def train(timesteps, datatype, debug):
+def train(timesteps=15, datatype='lstm', debug=False, nb_epoch=50,predict_days=18):
     USER_HOME = os.environ['HOME']
     log = logger.log
     network = policy.LSTMPolicy.create_network(timesteps=timesteps)
@@ -14,7 +14,7 @@ def train(timesteps, datatype, debug):
     hist6years = trade.get_hist6years(seg_len=timesteps,
                                       datatype=datatype,
                                       split=0.1,
-                                      debug=debug)
+                                      debug=debug,predict_days=predict_days)
 
     for (x_train, y_train, id_train), (x_valid, y_valid,
                                        id_valid) in hist6years:
@@ -35,7 +35,7 @@ def train(timesteps, datatype, debug):
         network.fit(x_train,
                     y_train,
                     batch_size=16,
-                    nb_epoch=20,
+                    nb_epoch=nb_epoch,
                     validation_data=(x_valid, y_valid))
         predicts = network.predict(x_valid, batch_size=16)
         v_predicts = pd.DataFrame()
