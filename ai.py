@@ -51,14 +51,14 @@ if __name__ == "__main__":
     t_time = time.clock()
     data_dim = 14
     # 7,15,150
-    timesteps = 250
+    timesteps = 128
     # nb_classes = 5
     datatype = 'lstm'
     policy_trainer.train(timesteps,
                          datatype,
                          debug=False,
                          nb_epoch=200,
-                         predict_days=9)
+                         predict_days=2)
     log.info('train spent time : %s', time.clock() - t_time)
 
     log.info('predict begin')
