@@ -16,7 +16,7 @@ def predict_today(datatype, timesteps):
                                                           datatype=datatype,
                                                           split=0.1,
                                                           debug=False)
-    network = policy.LSTMPolicy.create_network()
+    network = policy.LSTMPolicy.create_network(timesteps=timesteps)
     network.load_weights(USER_HOME + '/dw/' + datatype + '_seg' + str(
         timesteps) + '.h5')
 
