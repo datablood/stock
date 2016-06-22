@@ -20,13 +20,7 @@ def get_today(split=0.2,
     if debug:
         sql_stocklist += " and code in ('002717','601888','002405')"
     df = pd.read_sql_query(sql_stocklist, engine)
-    u = np.log(df['high'] / df['open'])
-    d = np.log(df['low'] / df['open'])
-    c = np.log(df['close'] / df['open'])
-    deltaT = 0.511 * np.square(u - d) - 0.019 * (c * (u + d) - 2 * u *
-                                                 d) - 0.383 * np.square(c)
-    df['deltat'] = deltaT
-
+    df = add_volatility(df)
     stockcodes = df['code'].unique()
     print stockcodes
 
@@ -86,12 +80,7 @@ def get_hist6years(split=0.2,
     if debug:
         sql_stocklist += " and code in ('002717','601888','002405')"
     df = pd.read_sql_query(sql_stocklist, engine)
-    u = np.log(df['high'] / df['open'])
-    d = np.log(df['low'] / df['open'])
-    c = np.log(df['close'] / df['open'])
-    deltaT = 0.511 * np.square(u - d) - 0.019 * (c * (u + d) - 2 * u *
-                                                 d) - 0.383 * np.square(c)
-    df['deltat'] = deltaT
+    df = add_volatility(df)
     stockcodes = df['code'].unique()
     print stockcodes
 
@@ -310,3 +299,50 @@ def normalize(x):
     if norm == 0:
         return x
     return x / norm
+
+
+def add_volatility(df):
+    u = np.log(df['high'] / df['open'])
+    d = np.log(df['low'] / df['open'])
+    c = np.log(df['close'] / df['open'])
+    deltaT = 0.511 * np.square(u - d) - 0.019 * (c * (u + d) - 2 * u *
+                                                 d) - 0.383 * np.square(c)
+    df['deltat'] = deltaT
+    return df
+
+# https://zh.wikipedia.org/wiki/MACD
+def add_MACD(df):
+    pass
+
+
+def add_KD(df):
+    pass
+
+
+def add_RSI(df):
+    pass
+
+
+def add_CCI(df):
+    pass
+
+
+def add_DMI(df):
+    pass
+
+
+def add_TRIX(df):
+    pass
+
+
+def add_BIAS(df):
+    pass
+
+
+def add_WR(df):
+    pass
+
+
+# http://www.360doc.com/content/16/0224/23/14224675_537167552.shtml
+def add_ASI(df):
+    pass
