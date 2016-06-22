@@ -20,6 +20,13 @@ def get_today(split=0.2,
     if debug:
         sql_stocklist += " and code in ('002717','601888','002405')"
     df = pd.read_sql_query(sql_stocklist, engine)
+    u = np.log(df['high'] / df['open'])
+    d = np.log(df['low'] / df['open'])
+    c = np.log(df['close'] / df['open'])
+    deltaT = 0.511 * np.square(u - d) - 0.019 * (c * (u + d) - 2 * u *
+                                                 d) - 0.383 * np.square(c)
+    df['deltat'] = deltaT
+
     stockcodes = df['code'].unique()
     print stockcodes
 
@@ -48,7 +55,7 @@ def get_today(split=0.2,
             data = temp_df[temp_df.c_yearmonthday == segday][
                 ['open', 'high', 'close', 'low', 'volume', 'price_change',
                  'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
-                 'v_ma20', 'turnover']]
+                 'v_ma20', 'turnover', 'deltat']]
             data = data.values
             SEG_X.append(data[0])
         if datatype == 'cnn':
@@ -79,6 +86,12 @@ def get_hist6years(split=0.2,
     if debug:
         sql_stocklist += " and code in ('002717','601888','002405')"
     df = pd.read_sql_query(sql_stocklist, engine)
+    u = np.log(df['high'] / df['open'])
+    d = np.log(df['low'] / df['open'])
+    c = np.log(df['close'] / df['open'])
+    deltaT = 0.511 * np.square(u - d) - 0.019 * (c * (u + d) - 2 * u *
+                                                 d) - 0.383 * np.square(c)
+    df['deltat'] = deltaT
     stockcodes = df['code'].unique()
     print stockcodes
 
@@ -117,7 +130,7 @@ def get_hist6years(split=0.2,
                 data = temp_df[temp_df.c_yearmonthday == segday][
                     ['open', 'high', 'close', 'low', 'volume', 'price_change',
                      'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
-                     'v_ma20', 'turnover']]
+                     'v_ma20', 'turnover', 'deltat']]
                 data = data.values
                 SEG_X.append(data[0])
             # SEG_X=np.array(SEG_X).T
@@ -224,7 +237,7 @@ def get_histdata(split=0.15, seg_len=3, debug=False, datatype='cnn'):
                 data = temp_df[temp_df.c_yearmonthday == segday][
                     ['changepercent', 'trade', 'open', 'high', 'low',
                      'settlement', 'volume', 'turnoverratio', 'amount', 'per',
-                     'pb', 'mktcap', 'nmc']]
+                     'pb', 'mktcap', 'nmc', 'deltat']]
                 data = data.values
                 SEG_X.append(data[0])
             # SEG_X=np.array(SEG_X).T

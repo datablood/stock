@@ -10,7 +10,7 @@ from keras.layers.advanced_activations import LeakyReLU, PReLU, ELU, SReLU
 class LSTMPolicy:
     @staticmethod
     def create_network(**kwargs):
-        defaults = {"timesteps": 128, "data_dim": 14}
+        defaults = {"timesteps": 128, "data_dim": 15}
         params = defaults
         params.update(**kwargs)
 

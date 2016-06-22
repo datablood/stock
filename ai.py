@@ -45,7 +45,7 @@ if __name__ == "__main__":
     })
     log = logger.log
     t_time = time.clock()
-    data_dim = 14
+    data_dim = 15
     # 7,15,150
     timesteps = 128
     # nb_classes = 5
