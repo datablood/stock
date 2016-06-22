@@ -28,13 +28,9 @@ def predict_today(datatype, timesteps):
     v_predicts['datain_date'] = nowdate
 
     db = Db()
-    conn, cur = db._getPGcur()
     v_predicts = v_predicts.to_dict('records')
-    cur.executemany("""INSERT INTO predicts(code,name,predict,datain_date)
+    db.insertmany("""INSERT INTO predicts(code,name,predict,datain_date)
         VALUES (%(code)s,%(name)s,%(predict)s,%(datain_date)s)""", v_predicts)
-    conn.commit()
-    cur.close()
-    conn.close()
 
     log.info('predicts finished')
 
@@ -57,7 +53,7 @@ if __name__ == "__main__":
     policy_trainer.train(timesteps,
                          datatype,
                          debug=False,
-                         nb_epoch=200,
+                         nb_epoch=50,
                          predict_days=2)
     log.info('train spent time : %s', time.clock() - t_time)
 

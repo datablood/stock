@@ -6,6 +6,7 @@ import psycopg2.extras
 from util import logger
 from conf import db_settings
 from sqlalchemy import create_engine
+from contextlib import contextmanager
 log = logger.log
 """
 获取psql cur
@@ -53,6 +54,14 @@ class Db:
                                self.password + '@' + self.host + '/' +
                                self.dbname)
         return engine
+
+    @contextmanager
+    def insertmany(self, sql, vdict):
+        conn, cur = self._getPGcur()
+        yield cur.executemany(sql, vdict)
+        conn.commit()
+        cur.close()
+        conn.close()
 
     def closedbAll(self, **kwargs):
         for key in kwargs:

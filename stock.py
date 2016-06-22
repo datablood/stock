@@ -40,27 +40,22 @@ class Stock():
         self.set_data()
         db = Db()
 
-        conn, cur = db._getPGcur()
         gta = td.get_today_all()
         gta['datain_date'] = self.nowtime
         gta['c_yearmonthday'] = self.nowdate
 
         gta = gta.to_dict('records')
 
-        cur.executemany(
+        db.insertmany(
             """INSERT INTO trade_record(c_yearmonthday,code,name,changepercent,trade,open,high,low,settlement
         ,volume,turnoverratio,amount,per,pb,mktcap,nmc,datain_date)
         VALUES (%(c_yearmonthday)s,%(code)s,%(name)s,%(changepercent)s,%(trade)s,%(open)s,%(high)s,%(low)s,%(settlement)s,%(volume)s,%(turnoverratio)s,%(amount)s,%(per)s,%(pb)s,%(mktcap)s,%(nmc)s,%(datain_date)s)""",
             gta)
-        conn.commit()
-        cur.close()
-        conn.close()
 
     def insert_hist_trade(self):
         self.set_data()
         db = Db()
 
-        conn, cur = db._getPGcur()
         engine = db._get_engine()
         sql_stocklist = "select code,name from stock_code"
         codes = pd.read_sql_query(sql_stocklist, engine)
@@ -81,18 +76,16 @@ class Stock():
 
             gta = gta.to_dict('records')
             try:
-                cur.executemany(
+                db.insertmany(
                     """INSERT INTO trade_hist(c_yearmonthday,code,name,open,high,close,low,volume,price_change,p_change,ma5,ma10,ma20,v_ma5,v_ma10,v_ma20,turnover,datain_date)
                 VALUES (%(c_yearmonthday)s,%(code)s,%(name)s,%(open)s,%(high)s,%(close)s,%(low)s,%(volume)s,%(price_change)s,%(p_change)s,%(ma5)s,%(ma10)s,%(ma20)s,%(v_ma5)s,%(v_ma10)s,%(v_ma20)s,%(turnover)s,%(datain_date)s)""",
                     gta)
             except Exception, e:
                 log.error('insert error:%s ', e)
 
-            conn.commit()
-            log.info('%s stock insert finished,%s,%s', i,row['code'], row['name'].decode('utf-8'))
+            log.info('%s stock insert finished,%s,%s', i, row['code'],
+                     row['name'].decode('utf-8'))
             i += 1
-        cur.close()
-        conn.close()
 
 
 if __name__ == "__main__":
