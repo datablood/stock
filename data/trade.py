@@ -32,42 +32,45 @@ def get_today(split=0.2,
     k = 0
     for codes in stockcodes:
         temp_df = df[df.code == codes]
+        temp_df1 = temp_df.copy(deep=True)
+        temp_df1 = temp_df1.sort_values(by='c_yearmonthday', ascending=1)
 
-        tradedaylist = temp_df.copy(deep=True)['c_yearmonthday'].values
+        tradedaylist = temp_df1['c_yearmonthday'].values
         tradedaylist.sort()
         tradedaylist = tradedaylist[::-1]
+
+        temp_df1 = temp_df1.set_index('c_yearmonthday')
         if len(tradedaylist) < seg_len:
             log.info('not enough trade days ,code is :%s', codes)
             continue
 
         i = 0
         segdays = tradedaylist[i:i + seg_len]
+        segbegin = segdays[len(segdays) - 1]
+        segend = segdays[0]
         if len(segdays) < seg_len:
             break
         data = []
-        SEG_X = []
-        for segday in segdays:
-            data = temp_df[temp_df.c_yearmonthday == segday][
-                ['open', 'high', 'close', 'low', 'volume', 'price_change',
-                 'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
-                 'v_ma20', 'turnover', 'deltat', 'BIAS_B', 'BIAS_S', 'BOLL_B',
-                 'BOLL_S', 'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL', 'DMI_IF1',
-                 'DMI_IF2', 'DMI_MAX1', 'DMI_S', 'KDJ_B', 'KDJ_S', 'KD_B',
-                 'KD_S', 'MACD', 'MACD_B', 'MACD_DEA', 'MACD_DIFF',
-                 'MACD_EMA_12', 'MACD_EMA_26', 'MACD_EMA_9', 'MACD_S', 'MA_B',
-                 'MA_S', 'PSY_B', 'PSY_MYPSY1', 'PSY_S', 'ROC_B', 'ROC_S',
-                 'RSI_B', 'RSI_S', 'VR_B', 'VR_IF1', 'VR_IF2', 'VR_IF3',
-                 'VR_S', 'XYYH_B', 'XYYH_B1', 'XYYH_B2', 'XYYH_B3', 'XYYH_CC',
-                 'XYYH_DD']]
-            data = data.values
-            SEG_X.append(data[0])
+        data = temp_df1.loc[segbegin:segend,[
+                'open', 'high', 'close', 'low', 'volume', 'price_change',
+                'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
+                'v_ma20', 'turnover', 'deltat', 'BIAS_B', 'BIAS_S', 'BOLL_B',
+                'BOLL_S', 'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL', 'DMI_IF1',
+                'DMI_IF2', 'DMI_MAX1', 'DMI_S', 'KDJ_B', 'KDJ_S', 'KD_B',
+                'KD_S', 'MACD', 'MACD_B', 'MACD_DEA', 'MACD_DIFF',
+                'MACD_EMA_12', 'MACD_EMA_26', 'MACD_EMA_9', 'MACD_S', 'MA_B',
+                'MA_S', 'PSY_B', 'PSY_MYPSY1', 'PSY_S', 'ROC_B', 'ROC_S',
+                'RSI_B', 'RSI_S', 'VR_B', 'VR_IF1', 'VR_IF2', 'VR_IF3',
+                'VR_S', 'XYYH_B', 'XYYH_B1', 'XYYH_B2', 'XYYH_B3', 'XYYH_CC',
+                'XYYH_DD']]
+        data = data.values
         if datatype == 'cnn':
-            SEG_X = [SEG_X]
+            data = [data]
         data_tag = temp_df[temp_df.c_yearmonthday == tradedaylist[0]][
             ['code', 'name', 'p_change']]
         temp_id = data_tag['code'].values[0]
         temp_name = data_tag['name'].values[0]
-        X_predict.append(SEG_X)
+        X_predict.append(data)
         ID_predict.append(temp_id)
         NAME_predict.append(temp_name)
         k += 1
@@ -106,10 +109,14 @@ def get_hist6years(split=0.2,
     predict_days = predict_days
     for codes in stockcodes:
         temp_df = df[df.code == codes]
+        temp_df1 = temp_df.copy(deep=True)
+        temp_df1 = temp_df1.sort_values(by='c_yearmonthday', ascending=1)
 
-        tradedaylist = temp_df.copy(deep=True)['c_yearmonthday'].values
+        tradedaylist = temp_df1['c_yearmonthday'].values
         tradedaylist.sort()
         tradedaylist = tradedaylist[::-1]
+
+        temp_df1 = temp_df1.set_index('c_yearmonthday')
         if len(tradedaylist) < seg_len:
             log.info('not enough trade days ,code is :%s', codes)
             continue
@@ -121,31 +128,29 @@ def get_hist6years(split=0.2,
         for day in tradedaylist:
             i += 1
             segdays = tradedaylist[i + predict_days:i + predict_days + seg_len]
+            segbegin = segdays[len(segdays) - 1]
+            segend = segdays[0]
             if len(segdays) < seg_len:
                 break
-            SEG_X = []
             data = []
-            for segday in segdays:
-                data = temp_df[temp_df.c_yearmonthday == segday][
-                    ['open', 'high', 'close', 'low', 'volume', 'price_change',
-                     'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
-                     'v_ma20', 'turnover', 'deltat', 'BIAS_B', 'BIAS_S',
-                     'BOLL_B', 'BOLL_S', 'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL',
-                     'DMI_IF1', 'DMI_IF2', 'DMI_MAX1', 'DMI_S', 'KDJ_B',
-                     'KDJ_S', 'KD_B', 'KD_S', 'MACD', 'MACD_B', 'MACD_DEA',
-                     'MACD_DIFF', 'MACD_EMA_12', 'MACD_EMA_26', 'MACD_EMA_9',
-                     'MACD_S', 'MA_B', 'MA_S', 'PSY_B', 'PSY_MYPSY1', 'PSY_S',
-                     'ROC_B', 'ROC_S', 'RSI_B', 'RSI_S', 'VR_B', 'VR_IF1',
-                     'VR_IF2', 'VR_IF3', 'VR_S', 'XYYH_B', 'XYYH_B1',
-                     'XYYH_B2', 'XYYH_B3', 'XYYH_CC', 'XYYH_DD']]
-                data = data.values
-                SEG_X.append(data[0])
-            # SEG_X=np.array(SEG_X).T
+            # for segday in segdays:
+            data = temp_df1.loc[segbegin:segend, [
+                'open', 'high', 'close', 'low', 'volume', 'price_change',
+                'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20',
+                'turnover', 'deltat', 'BIAS_B', 'BIAS_S', 'BOLL_B', 'BOLL_S',
+                'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL', 'DMI_IF1', 'DMI_IF2',
+                'DMI_MAX1', 'DMI_S', 'KDJ_B', 'KDJ_S', 'KD_B', 'KD_S', 'MACD',
+                'MACD_B', 'MACD_DEA', 'MACD_DIFF', 'MACD_EMA_12',
+                'MACD_EMA_26', 'MACD_EMA_9', 'MACD_S', 'MA_B', 'MA_S', 'PSY_B',
+                'PSY_MYPSY1', 'PSY_S', 'ROC_B', 'ROC_S', 'RSI_B', 'RSI_S',
+                'VR_B', 'VR_IF1', 'VR_IF2', 'VR_IF3', 'VR_S', 'XYYH_B',
+                'XYYH_B1', 'XYYH_B2', 'XYYH_B3', 'XYYH_CC', 'XYYH_DD'
+            ]]
+            data = data.values
             if datatype == 'cnn':
-                SEG_X = [SEG_X]
+                data = [data]
             d1 = tradedaylist[i - 1]
             d3 = tradedaylist[i + predict_days - 1]
-            # print d1, d3, segdays
             data_tag = temp_df[temp_df.c_yearmonthday == d1][
                 ['code', 'name', 'p_change', 'close']]
             data_tag3 = temp_df[temp_df.c_yearmonthday == d3][
@@ -154,14 +159,13 @@ def get_hist6years(split=0.2,
             temp_y3 = data_tag3['close'].values[0]
             temp_y = (temp_y - temp_y3) / temp_y3
             temp_y = to_cate01(temp_y)
-            # print 'tempy:', temp_y
             temp_id = data_tag['code'].values[0]
             if (i > 0 and i <= validdays):
-                X_valid.append(SEG_X)
+                X_valid.append(data)
                 ID_valid.append(temp_id)
                 Y_valid.append(temp_y)
             else:
-                X_train.append(SEG_X)
+                X_train.append(data)
                 ID_train.append(temp_id)
                 Y_train.append(temp_y)
         k += 1
