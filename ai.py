@@ -1,5 +1,4 @@
 from util import logger
-import six.moves.cPickle as pickle
 import os
 import time
 from StockAI.models import policy
@@ -9,14 +8,14 @@ import pandas as pd
 from StockAI.training import policy_trainer
 
 
-def predict_today(datatype, timesteps):
+def predict_today(datatype, timesteps, data_dim=15):
     # log = logger.log
-    nowdate = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+    nowdate = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
     x_predict, id_predict, name_predict = trade.get_today(seg_len=timesteps,
                                                           datatype=datatype,
                                                           split=0.1,
                                                           debug=False)
-    network = policy.LSTMPolicy.create_network(timesteps=timesteps)
+    network = policy.LSTMPolicy.create_network(timesteps=timesteps,data_dim=data_dim)
     network.load_weights(USER_HOME + '/dw/' + datatype + '_seg' + str(
         timesteps) + '.h5')
 
@@ -45,13 +44,14 @@ if __name__ == "__main__":
     })
     log = logger.log
     t_time = time.clock()
-    data_dim = 15
+    data_dim = 59
     # 7,15,150
     timesteps = 128
     # nb_classes = 5
     datatype = 'lstm'
-    policy_trainer.train(timesteps,
-                         datatype,
+    policy_trainer.train(timesteps=timesteps,
+                         data_dim=data_dim,
+                         datatype=datatype,
                          debug=False,
                          nb_epoch=50,
                          predict_days=2)
@@ -59,5 +59,5 @@ if __name__ == "__main__":
 
     log.info('predict begin')
     p_time = time.clock()
-    predict_today(datatype, timesteps)
+    predict_today(datatype, timesteps,data_dim=data_dim)
     log.info('predict finished,cost time:%s', time.clock() - p_time)

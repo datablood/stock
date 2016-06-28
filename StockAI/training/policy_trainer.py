@@ -5,10 +5,10 @@ import os
 import pandas as pd
 
 
-def train(timesteps=15, datatype='lstm', debug=False, nb_epoch=50,predict_days=18):
+def train(timesteps=15, data_dim=15, datatype='lstm', debug=False, nb_epoch=50,predict_days=18):
     USER_HOME = os.environ['HOME']
     log = logger.log
-    network = policy.LSTMPolicy.create_network(timesteps=timesteps)
+    network = policy.LSTMPolicy.create_network(data_dim=data_dim, timesteps=timesteps)
 
     datatype = 'lstm'
     hist6years = trade.get_hist6years(seg_len=timesteps,
