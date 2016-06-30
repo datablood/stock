@@ -95,10 +95,6 @@ def train(timesteps=15,
                           validation_data=valid_generator,
                           nb_val_samples=n_valid_batch * batch_size)
 
-    score = network.evaluate_generator(valid_generator,
-                                       n_valid_batch * batch_size)
-    log.info('Test score:%s', score[0])
-    log.info('Test accuracy:%s', score[1])
 
 
 def get_best_weights(meta_file):
