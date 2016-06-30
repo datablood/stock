@@ -163,6 +163,7 @@ def get_hist_orgindata(debug=False):
     # 增加技术指标
     df = add_volatility(df)
     stockcodes = df['code'].unique()
+    stockcodes = np.random.permutation(stockcodes)
     df = get_technique(df, stockcodes)
     return stockcodes, df
 
