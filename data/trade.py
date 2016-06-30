@@ -16,8 +16,8 @@ def get_hist_generator(split=0.2,
                        predict_days=18,
                        valid=True,
                        batch_size=16,
-                       stockcodes=None,
                        df=None):
+    batch_idx=0
     while True:
         log = logger.log
         X_train = []
@@ -29,6 +29,10 @@ def get_hist_generator(split=0.2,
         k = 0
         predict_days = predict_days
 
+        np.random.seed(batch_idx)
+        stockcodes = df['code'].unique()
+        stockcodes = np.random.permutation(stockcodes)
+        batch_idx += 1
         for codes in stockcodes:
             temp_df = df[df.code == codes]
             temp_df1 = temp_df.copy(deep=True)
@@ -112,13 +116,13 @@ def get_hist_n_batch(split=0.2,
                      predict_days=18,
                      valid=True,
                      batch_size=16,
-                     stockcodes=None,
                      df=None):
     log = logger.log
     k = 0
     n_train_batch = 0
     n_valid_batch = 0
     predict_days = predict_days
+    stockcodes = df['code'].unique()
     for codes in stockcodes:
         temp_df = df[df.code == codes]
         temp_df1 = temp_df.copy(deep=True)
@@ -162,10 +166,8 @@ def get_hist_orgindata(debug=False):
     df = pd.read_sql_query(sql_stocklist, engine)
     # 增加技术指标
     df = add_volatility(df)
-    stockcodes = df['code'].unique()
-    stockcodes = np.random.permutation(stockcodes)
-    df = get_technique(df, stockcodes)
-    return stockcodes, df
+    df = get_technique(df)
+    return df
 
 
 def get_today(split=0.2,
@@ -493,9 +495,10 @@ def add_volatility(df):
     return df
 
 
-def get_technique(df, codes):
+def get_technique(df):
     temp_data = pd.DataFrame()
     stock_data = df.copy(deep=True)
+    codes = stock_data['code'].unique()
     for code in codes:
         single_data = stock_data[stock_data.code == code]
         single_data = single_data.sort_values('c_yearmonthday', ascending=1)

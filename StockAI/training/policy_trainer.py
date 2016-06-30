@@ -44,7 +44,7 @@ def train(timesteps=15,
                                                timesteps=timesteps)
 
     datatype = 'lstm'
-    stockcodes, df = trade.get_hist_orgindata(debug)
+    df = trade.get_hist_orgindata(debug)
     train_generator = trade.get_hist_generator(seg_len=timesteps,
                                                datatype=datatype,
                                                split=0.1,
@@ -52,7 +52,6 @@ def train(timesteps=15,
                                                predict_days=predict_days,
                                                valid=False,
                                                batch_size=batch_size,
-                                               stockcodes=stockcodes,
                                                df=df)
     valid_generator = trade.get_hist_generator(seg_len=timesteps,
                                                datatype=datatype,
@@ -61,7 +60,6 @@ def train(timesteps=15,
                                                predict_days=predict_days,
                                                valid=True,
                                                batch_size=batch_size,
-                                               stockcodes=stockcodes,
                                                df=df)
     n_train_batch, n_valid_batch = trade.get_hist_n_batch(
         seg_len=timesteps,
@@ -70,7 +68,6 @@ def train(timesteps=15,
         debug=debug,
         predict_days=predict_days,
         batch_size=batch_size,
-        stockcodes=stockcodes,
         df=df)
 
     out_directory_path = USER_HOME + '/dw/'
