@@ -1,49 +1,113 @@
 from data import trade
 from StockAI.models import policy
 from util import logger
+from keras.callbacks import ModelCheckpoint, Callback
 import os
+import json
 import pandas as pd
 
 
-def train(timesteps=15, data_dim=15, datatype='lstm', debug=False, nb_epoch=50,predict_days=18):
+class MetadataWriterCallback(Callback):
+    def __init__(self, path):
+        self.file = path
+        self.metadata = {'epochs': [], 'best_epoch': 0}
+
+    def on_epoch_end(self, epoch, logs={}):
+        # in case appending to logs (resuming training), get epoch number ourselves
+        epoch = len(self.metadata['epochs'])
+
+        self.metadata['epochs'].append(logs)
+
+        if 'val_loss' in logs:
+            key = 'val_loss'
+        else:
+            key = 'loss'
+
+        best_loss = self.metadata['epochs'][self.metadata['best_epoch']][key]
+        if logs.get(key) < best_loss:
+            self.metadata['best_epoch'] = epoch
+
+        with open(self.file, 'w') as f:
+            json.dump(self.metadata, f)
+
+
+def train(timesteps=15,
+          data_dim=15,
+          datatype='lstm',
+          debug=False,
+          nb_epoch=50,
+          predict_days=18,
+          batch_size=32):
     USER_HOME = os.environ['HOME']
     log = logger.log
-    network = policy.LSTMPolicy.create_network(data_dim=data_dim, timesteps=timesteps)
+    network = policy.LSTMPolicy.create_network(data_dim=data_dim,
+                                               timesteps=timesteps)
 
     datatype = 'lstm'
-    hist6years = trade.get_hist6years(seg_len=timesteps,
-                                      datatype=datatype,
-                                      split=0.1,
-                                      debug=debug,predict_days=predict_days)
+    stockcodes, df = trade.get_hist_orgindata(debug)
+    train_generator = trade.get_hist_generator(seg_len=timesteps,
+                                               datatype=datatype,
+                                               split=0.1,
+                                               debug=debug,
+                                               predict_days=predict_days,
+                                               valid=False,
+                                               batch_size=batch_size,
+                                               stockcodes=stockcodes,
+                                               df=df)
+    valid_generator = trade.get_hist_generator(seg_len=timesteps,
+                                               datatype=datatype,
+                                               split=0.1,
+                                               debug=debug,
+                                               predict_days=predict_days,
+                                               valid=True,
+                                               batch_size=batch_size,
+                                               stockcodes=stockcodes,
+                                               df=df)
+    n_train_batch, n_valid_batch = trade.get_hist_n_batch(
+        seg_len=timesteps,
+        datatype=datatype,
+        split=0.1,
+        debug=debug,
+        predict_days=predict_days,
+        batch_size=batch_size,
+        stockcodes=stockcodes,
+        df=df)
 
-    for (x_train, y_train, id_train), (x_valid, y_valid,
-                                       id_valid) in hist6years:
-        log.info('x_train shape is: %s', x_train.shape)
-        # x_train=np_utils.normalize(x_train)
-        # x_valid=np_utils.normalize(x_valid)
-        # print('y_valid value', type(y_valid[0]), y_valid, type(y_valid))
-        # y_train=np_utils.to_categorical(y_train,nb_classes)
-        # y_valid=np_utils.to_categorical(y_valid,nb_classes)
+    out_directory_path = USER_HOME + '/dw/'
 
-        # lstm for a binary classification problem
-        weights_path = USER_HOME + '/dw/' + datatype + '_seg' + str(
-            timesteps) + '.h5'
-        if os.path.exists(weights_path):
-            network.load_weights(weights_path)
-        # lstm end
+    if not os.path.exists(out_directory_path):
+        os.makedirs(out_directory_path)
+    meta_file = os.path.join(out_directory_path, 'metadata.json')
+    meta_writer = MetadataWriterCallback(meta_file)
 
-        network.fit(x_train,
-                    y_train,
-                    batch_size=16,
-                    nb_epoch=nb_epoch,
-                    validation_data=(x_valid, y_valid))
-        predicts = network.predict(x_valid, batch_size=16)
-        v_predicts = pd.DataFrame()
-        v_predicts['CODE'] = id_valid
-        v_predicts['PREDICT'] = predicts
-        log.info('batch predicts is : %s', v_predicts)
+    checkpoint_template = os.path.join(out_directory_path,
+                                       'weights.{epoch:05d}.h5')
+    checkpointer = ModelCheckpoint(checkpoint_template)
 
-        score = network.evaluate(x_valid, y_valid, verbose=0)
-        log.info('Test score:%s', score[0])
-        log.info('Test accuracy:%s', score[1])
-        network.save_weights(weights_path, overwrite=True)
+    weights_path = get_best_weights(meta_file)
+    if weights_path:
+        network.load_weights(weights_path)
+
+    network.fit_generator(train_generator,
+                          samples_per_epoch=n_train_batch * batch_size,
+                          nb_epoch=nb_epoch,
+                          callbacks=[checkpointer, meta_writer],
+                          validation_data=valid_generator,
+                          nb_val_samples=n_valid_batch * batch_size)
+
+    score = network.evaluate_generator(valid_generator,
+                                       n_valid_batch * batch_size)
+    log.info('Test score:%s', score[0])
+    log.info('Test accuracy:%s', score[1])
+
+
+def get_best_weights(meta_file):
+    best_weight_file = None
+    if os.path.exists(meta_file):
+        with open(meta_file, 'r') as f:
+            metadata = json.load(f)
+            best_weight_file = 'weights.%05d.h5' % metadata['best_epoch']
+    if best_weight_file:
+        weights_path = os.path.join(
+            os.path.dirname(meta_file), best_weight_file)
+        return weights_path

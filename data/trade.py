@@ -8,6 +8,164 @@ import six.moves.cPickle as pickle
 import pandas as pd
 
 
+def get_hist_generator(split=0.2,
+                       seg_len=3,
+                       debug=False,
+                       datatype='cnn',
+                       datafile=None,
+                       predict_days=18,
+                       valid=True,
+                       batch_size=16,
+                       stockcodes=None,
+                       df=None):
+    log = logger.log
+    X_train = []
+    X_valid = []
+    Y_train = []
+    Y_valid = []
+    log.info('begin generate train data and validate data.')
+    begin_time = time.clock()
+    k = 0
+    predict_days = predict_days
+    while True:
+        for codes in stockcodes:
+            temp_df = df[df.code == codes]
+            temp_df1 = temp_df.copy(deep=True)
+            temp_df1 = temp_df1.sort_values(by='c_yearmonthday', ascending=1)
+
+            tradedaylist = temp_df1['c_yearmonthday'].values
+            tradedaylist.sort()
+            tradedaylist = tradedaylist[::-1]
+
+            temp_df1 = temp_df1.set_index('c_yearmonthday')
+            if len(tradedaylist) < seg_len:
+                log.info('not enough trade days ,code is :%s', codes)
+                continue
+
+            validdays = np.round(split * len(tradedaylist))
+            # validdays = 2
+
+            i = 0
+            for day in tradedaylist:
+                i += 1
+                segdays = tradedaylist[i + predict_days:i + predict_days +
+                                       seg_len]
+                segbegin = segdays[len(segdays) - 1]
+                segend = segdays[0]
+                if len(segdays) < seg_len:
+                    break
+                data = []
+                # for segday in segdays:
+                data = temp_df1.loc[segbegin:segend, [
+                    'open', 'high', 'close', 'low', 'volume', 'price_change',
+                    'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
+                    'v_ma20', 'turnover', 'deltat', 'BIAS_B', 'BIAS_S',
+                    'BOLL_B', 'BOLL_S', 'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL',
+                    'DMI_IF1', 'DMI_IF2', 'DMI_MAX1', 'DMI_S', 'KDJ_B',
+                    'KDJ_S', 'KD_B', 'KD_S', 'MACD', 'MACD_B', 'MACD_DEA',
+                    'MACD_DIFF', 'MACD_EMA_12', 'MACD_EMA_26', 'MACD_EMA_9',
+                    'MACD_S', 'MA_B', 'MA_S', 'PSY_B', 'PSY_MYPSY1', 'PSY_S',
+                    'ROC_B', 'ROC_S', 'RSI_B', 'RSI_S', 'VR_B', 'VR_IF1',
+                    'VR_IF2', 'VR_IF3', 'VR_S', 'XYYH_B', 'XYYH_B1', 'XYYH_B2',
+                    'XYYH_B3', 'XYYH_CC', 'XYYH_DD'
+                ]]
+                data = data.values
+                if datatype == 'cnn':
+                    data = [data]
+                d1 = tradedaylist[i - 1]
+                d3 = tradedaylist[i + predict_days - 1]
+                data_tag = temp_df[temp_df.c_yearmonthday == d1][
+                    ['code', 'name', 'p_change', 'close']]
+                data_tag3 = temp_df[temp_df.c_yearmonthday == d3][
+                    ['code', 'name', 'p_change', 'close']]
+                temp_y = data_tag['close'].values[0]
+                temp_y3 = data_tag3['close'].values[0]
+                temp_y = (temp_y - temp_y3) / temp_y3
+                temp_y = to_cate01(temp_y)
+                if (i > 0 and i <= validdays):
+                    X_valid.append(data)
+                    Y_valid.append(temp_y)
+                    if valid:
+                        k += 1
+                        if k % batch_size == 0:
+                            yield (np.asarray(X_valid), np.asarray(Y_valid))
+                            X_valid = []
+                            Y_valid = []
+
+                else:
+                    if not valid:
+                        X_train.append(data)
+                        Y_train.append(temp_y)
+                        k += 1
+                        if k % batch_size == 0:
+                            yield (np.asarray(X_train), np.asarray(Y_train))
+                            X_train = []
+                            Y_train = []
+
+
+def get_hist_n_batch(split=0.2,
+                     seg_len=3,
+                     debug=False,
+                     datatype='cnn',
+                     datafile=None,
+                     predict_days=18,
+                     valid=True,
+                     batch_size=16,
+                     stockcodes=None,
+                     df=None):
+    log = logger.log
+    k = 0
+    n_train_batch = 0
+    n_valid_batch = 0
+    predict_days = predict_days
+    for codes in stockcodes:
+        temp_df = df[df.code == codes]
+        temp_df1 = temp_df.copy(deep=True)
+        temp_df1 = temp_df1.sort_values(by='c_yearmonthday', ascending=1)
+
+        tradedaylist = temp_df1['c_yearmonthday'].values
+        tradedaylist.sort()
+        tradedaylist = tradedaylist[::-1]
+
+        temp_df1 = temp_df1.set_index('c_yearmonthday')
+        if len(tradedaylist) < seg_len:
+            log.info('not enough trade days ,code is :%s', codes)
+            continue
+
+        validdays = np.round(split * len(tradedaylist))
+        i = 0
+        for day in tradedaylist:
+            i += 1
+            segdays = tradedaylist[i + predict_days:i + predict_days + seg_len]
+            segbegin = segdays[len(segdays) - 1]
+            segend = segdays[0]
+            if len(segdays) < seg_len:
+                break
+            if (i > 0 and i <= validdays):
+                k += 1
+                if k % batch_size == 0:
+                    n_valid_batch += 1
+            else:
+                k += 1
+                if k % batch_size == 0:
+                    n_train_batch += 1
+    return n_train_batch, n_valid_batch
+
+
+def get_hist_orgindata(debug=False):
+    db = Db()
+    engine = db._get_engine()
+    sql_stocklist = "select  * from trade_hist where code in (select code  from trade_hist  where high<>0.0 and low <>0.0 group by code having count(code)>100)"
+    if debug:
+        sql_stocklist += " and code in ('002717','601888','002405')"
+    df = pd.read_sql_query(sql_stocklist, engine)
+    # 增加技术指标
+    df = add_volatility(df)
+    stockcodes = df['code'].unique()
+    df = get_technique(df, stockcodes)
+    return stockcodes, df
+
+
 def get_today(split=0.2,
               seg_len=3,
               debug=False,
@@ -51,18 +209,18 @@ def get_today(split=0.2,
         if len(segdays) < seg_len:
             break
         data = []
-        data = temp_df1.loc[segbegin:segend,[
-                'open', 'high', 'close', 'low', 'volume', 'price_change',
-                'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10',
-                'v_ma20', 'turnover', 'deltat', 'BIAS_B', 'BIAS_S', 'BOLL_B',
-                'BOLL_S', 'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL', 'DMI_IF1',
-                'DMI_IF2', 'DMI_MAX1', 'DMI_S', 'KDJ_B', 'KDJ_S', 'KD_B',
-                'KD_S', 'MACD', 'MACD_B', 'MACD_DEA', 'MACD_DIFF',
-                'MACD_EMA_12', 'MACD_EMA_26', 'MACD_EMA_9', 'MACD_S', 'MA_B',
-                'MA_S', 'PSY_B', 'PSY_MYPSY1', 'PSY_S', 'ROC_B', 'ROC_S',
-                'RSI_B', 'RSI_S', 'VR_B', 'VR_IF1', 'VR_IF2', 'VR_IF3',
-                'VR_S', 'XYYH_B', 'XYYH_B1', 'XYYH_B2', 'XYYH_B3', 'XYYH_CC',
-                'XYYH_DD']]
+        data = temp_df1.loc[segbegin:segend, [
+            'open', 'high', 'close', 'low', 'volume', 'price_change',
+            'p_change', 'ma5', 'ma10', 'ma20', 'v_ma5', 'v_ma10', 'v_ma20',
+            'turnover', 'deltat', 'BIAS_B', 'BIAS_S', 'BOLL_B', 'BOLL_S',
+            'CCI_B', 'CCI_S', 'DMI_B', 'DMI_HL', 'DMI_IF1', 'DMI_IF2',
+            'DMI_MAX1', 'DMI_S', 'KDJ_B', 'KDJ_S', 'KD_B', 'KD_S', 'MACD',
+            'MACD_B', 'MACD_DEA', 'MACD_DIFF', 'MACD_EMA_12', 'MACD_EMA_26',
+            'MACD_EMA_9', 'MACD_S', 'MA_B', 'MA_S', 'PSY_B', 'PSY_MYPSY1',
+            'PSY_S', 'ROC_B', 'ROC_S', 'RSI_B', 'RSI_S', 'VR_B', 'VR_IF1',
+            'VR_IF2', 'VR_IF3', 'VR_S', 'XYYH_B', 'XYYH_B1', 'XYYH_B2',
+            'XYYH_B3', 'XYYH_CC', 'XYYH_DD'
+        ]]
         data = data.values
         if datatype == 'cnn':
             data = [data]
@@ -354,7 +512,6 @@ def get_technique(df, codes):
         single_data = add_ROC(single_data)
         temp_data = temp_data.append(single_data)
         temp_data = temp_data.dropna(axis=1)
-        print temp_data.shape
     return temp_data
 
 

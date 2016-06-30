@@ -15,9 +15,13 @@ def predict_today(datatype, timesteps, data_dim=15):
                                                           datatype=datatype,
                                                           split=0.1,
                                                           debug=False)
-    network = policy.LSTMPolicy.create_network(timesteps=timesteps,data_dim=data_dim)
-    network.load_weights(USER_HOME + '/dw/' + datatype + '_seg' + str(
-        timesteps) + '.h5')
+    network = policy.LSTMPolicy.create_network(timesteps=timesteps,
+                                               data_dim=data_dim)
+    USER_HOME = os.environ['HOME']
+    out_directory_path = USER_HOME + '/dw/'
+    meta_file = os.path.join(out_directory_path, 'metadata.json')
+    weights_path = policy_trainer.get_best_weights(meta_file)
+    network.load_weights(weights_path)
 
     predicts = network.predict(x_predict, batch_size=16)
     v_predicts = pd.DataFrame()
@@ -54,7 +58,8 @@ if __name__ == "__main__":
                          datatype=datatype,
                          debug=False,
                          nb_epoch=50,
-                         predict_days=2)
+                         predict_days=2,
+                         batch_size=16)
     log.info('train spent time : %s', time.clock() - t_time)
 
     log.info('predict begin')
