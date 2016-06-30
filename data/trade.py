@@ -18,16 +18,17 @@ def get_hist_generator(split=0.2,
                        batch_size=16,
                        stockcodes=None,
                        df=None):
-    log = logger.log
-    X_train = []
-    X_valid = []
-    Y_train = []
-    Y_valid = []
-    log.info('begin generate train data and validate data.')
-    begin_time = time.clock()
-    k = 0
-    predict_days = predict_days
     while True:
+        log = logger.log
+        X_train = []
+        X_valid = []
+        Y_train = []
+        Y_valid = []
+        log.info('begin generate train data and validate data.')
+        begin_time = time.clock()
+        k = 0
+        predict_days = predict_days
+
         for codes in stockcodes:
             temp_df = df[df.code == codes]
             temp_df1 = temp_df.copy(deep=True)
