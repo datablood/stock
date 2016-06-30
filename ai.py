@@ -57,7 +57,7 @@ if __name__ == "__main__":
                          data_dim=data_dim,
                          datatype=datatype,
                          debug=False,
-                         nb_epoch=50,
+                         nb_epoch=60,
                          predict_days=2,
                          batch_size=16)
     log.info('train spent time : %s', time.clock() - t_time)
