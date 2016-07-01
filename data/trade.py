@@ -15,7 +15,6 @@ def get_hist_generator(seg_len=3,
                        predict_days=18,
                        batch_size=16,
                        df=None):
-    epoch_idx = 0
     while True:
         log = logger.log
         X_batch = []
@@ -24,10 +23,9 @@ def get_hist_generator(seg_len=3,
         k = 0
         predict_days = predict_days
 
-        np.random.seed(epoch_idx)
         stockcodes = df['code'].unique()
         stockcodes = np.random.permutation(stockcodes)
-        epoch_idx += 1
+
         for codes in stockcodes:
             temp_df = df[df.code == codes]
             temp_df1 = temp_df.copy(deep=True)
