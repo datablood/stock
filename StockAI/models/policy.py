@@ -117,15 +117,13 @@ class MIXPolicy:
         network.add(MaxPooling1D(pool_length=params['pool_length']))
         network.add(Dropout(0.5))
 
-        network.add(Convolution1D(nb_filter=params['nb_filter'],
-                                  filter_length=params['filter_length'],
-                                  border_mode='valid',
-                                  activation='relu',
-                                  subsample_length=1))
-        network.add(MaxPooling1D(pool_length=params['pool_length']))
-        network.add(Dropout(0.5))
-
-
+        # network.add(Convolution1D(nb_filter=params['nb_filter'],
+        #                           filter_length=params['filter_length'],
+        #                           border_mode='valid',
+        #                           activation='relu',
+        #                           subsample_length=1))
+        # network.add(MaxPooling1D(pool_length=params['pool_length']))
+        # network.add(Dropout(0.5))
 
         # network.add(Flatten())
         # # Note: Keras does automatic shape inference.
@@ -133,7 +131,7 @@ class MIXPolicy:
         # network.add(Activation('relu'))
         # network.add(Dropout(0.25))
 
-        network.add(LSTM(128))
+        network.add(LSTM(64))
         network.add(Dropout(0.15))
         network.add(Dense(1))
         network.add(Activation('sigmoid'))

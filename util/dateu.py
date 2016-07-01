@@ -90,8 +90,3 @@ def last_tddate():
         return day_last_week(-2)
     else:
         return day_last_week(-1)
-        
-    
-
-    
-    
