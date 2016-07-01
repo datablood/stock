@@ -184,7 +184,7 @@ def get_today(split=0.2,
     df = pd.read_sql_query(sql_stocklist, engine)
     df = add_volatility(df)
     stockcodes = df['code'].unique()
-    df = get_technique(df, stockcodes)
+    df = get_technique(df)
     print stockcodes
 
     X_predict = []
