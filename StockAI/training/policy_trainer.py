@@ -5,6 +5,7 @@ from keras.callbacks import ModelCheckpoint, Callback
 import os
 import json
 import pandas as pd
+import numpy as np
 
 
 class MetadataWriterCallback(Callback):
@@ -41,33 +42,43 @@ def train(timesteps=15,
     USER_HOME = os.environ['HOME']
     log = logger.log
     network = policy.MIXPolicy.create_network(data_dim=data_dim,
-                                               timesteps=timesteps)
+                                              timesteps=timesteps)
 
-    df = trade.get_hist_orgindata(debug)
+    df, codes = trade.get_hist_orgindata(debug)
+    split = 0.3
+    n_codes = len(codes)
+    n_train_codes = int(np.round(split * n_codes))
+    train_codes = codes[0:n_train_codes]
+    valid_codes = codes[n_train_codes:n_codes]
+    df_train = df[[xcode in train_codes for xcode in df.code]]
+    df_valid = df[[xcode in valid_codes for xcode in df.code]]
+    del df
     train_generator = trade.get_hist_generator(seg_len=timesteps,
                                                datatype=datatype,
-                                               split=0.1,
                                                debug=debug,
                                                predict_days=predict_days,
-                                               valid=False,
                                                batch_size=batch_size,
-                                               df=df)
+                                               df=df_train)
     valid_generator = trade.get_hist_generator(seg_len=timesteps,
                                                datatype=datatype,
-                                               split=0.1,
                                                debug=debug,
                                                predict_days=predict_days,
-                                               valid=True,
                                                batch_size=batch_size,
-                                               df=df)
-    n_train_batch, n_valid_batch = trade.get_hist_n_batch(
+                                               df=df_valid)
+    n_train_batch = trade.get_hist_n_batch(
         seg_len=timesteps,
         datatype=datatype,
-        split=0.1,
         debug=debug,
         predict_days=predict_days,
         batch_size=batch_size,
-        df=df)
+        df=df_train)
+    n_valid_batch = trade.get_hist_n_batch(
+        seg_len=timesteps,
+        datatype=datatype,
+        debug=debug,
+        predict_days=predict_days,
+        batch_size=batch_size,
+        df=df_valid)
 
     out_directory_path = USER_HOME + '/dw/'
 
@@ -90,7 +101,6 @@ def train(timesteps=15,
                           callbacks=[checkpointer, meta_writer],
                           validation_data=valid_generator,
                           nb_val_samples=n_valid_batch * batch_size)
-
 
 
 def get_best_weights(meta_file):

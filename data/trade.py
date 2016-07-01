@@ -8,31 +8,27 @@ import six.moves.cPickle as pickle
 import pandas as pd
 
 
-def get_hist_generator(split=0.2,
-                       seg_len=3,
+def get_hist_generator(seg_len=3,
                        debug=False,
                        datatype='cnn',
                        datafile=None,
                        predict_days=18,
-                       valid=True,
                        batch_size=16,
                        df=None):
-    batch_idx=0
+    epoch_idx = 0
     while True:
         log = logger.log
-        X_train = []
-        X_valid = []
-        Y_train = []
-        Y_valid = []
+        X_batch = []
+        Y_batch = []
         log.info('begin generate train data and validate data.')
         begin_time = time.clock()
         k = 0
         predict_days = predict_days
 
-        np.random.seed(batch_idx)
+        np.random.seed(epoch_idx)
         stockcodes = df['code'].unique()
         stockcodes = np.random.permutation(stockcodes)
-        batch_idx += 1
+        epoch_idx += 1
         for codes in stockcodes:
             temp_df = df[df.code == codes]
             temp_df1 = temp_df.copy(deep=True)
@@ -46,9 +42,6 @@ def get_hist_generator(split=0.2,
             if len(tradedaylist) < seg_len:
                 log.info('not enough trade days ,code is :%s', codes)
                 continue
-
-            validdays = np.round(split * len(tradedaylist))
-            # validdays = 2
 
             i = 0
             for day in tradedaylist:
@@ -87,40 +80,25 @@ def get_hist_generator(split=0.2,
                 temp_y3 = data_tag3['close'].values[0]
                 temp_y = (temp_y - temp_y3) / temp_y3
                 temp_y = to_cate01(temp_y)
-                if (i > 0 and i <= validdays):
-                    X_valid.append(data)
-                    Y_valid.append(temp_y)
-                    if valid:
-                        k += 1
-                        if k % batch_size == 0:
-                            yield (np.asarray(X_valid), np.asarray(Y_valid))
-                            X_valid = []
-                            Y_valid = []
-
-                else:
-                    if not valid:
-                        X_train.append(data)
-                        Y_train.append(temp_y)
-                        k += 1
-                        if k % batch_size == 0:
-                            yield (np.asarray(X_train), np.asarray(Y_train))
-                            X_train = []
-                            Y_train = []
+                X_batch.append(data)
+                Y_batch.append(temp_y)
+                k += 1
+                if k % batch_size == 0:
+                    yield (np.asarray(X_batch), np.asarray(Y_batch))
+                    X_batch = []
+                    Y_batch = []
 
 
-def get_hist_n_batch(split=0.2,
-                     seg_len=3,
+def get_hist_n_batch(seg_len=3,
                      debug=False,
                      datatype='cnn',
                      datafile=None,
                      predict_days=18,
-                     valid=True,
                      batch_size=16,
                      df=None):
     log = logger.log
     k = 0
-    n_train_batch = 0
-    n_valid_batch = 0
+    n_batch = 0
     predict_days = predict_days
     stockcodes = df['code'].unique()
     for codes in stockcodes:
@@ -137,7 +115,6 @@ def get_hist_n_batch(split=0.2,
             log.info('not enough trade days ,code is :%s', codes)
             continue
 
-        validdays = np.round(split * len(tradedaylist))
         i = 0
         for day in tradedaylist:
             i += 1
@@ -146,15 +123,10 @@ def get_hist_n_batch(split=0.2,
             segend = segdays[0]
             if len(segdays) < seg_len:
                 break
-            if (i > 0 and i <= validdays):
-                k += 1
-                if k % batch_size == 0:
-                    n_valid_batch += 1
-            else:
-                k += 1
-                if k % batch_size == 0:
-                    n_train_batch += 1
-    return n_train_batch, n_valid_batch
+            k += 1
+            if k % batch_size == 0:
+                n_batch += 1
+    return n_batch
 
 
 def get_hist_orgindata(debug=False):
@@ -164,10 +136,11 @@ def get_hist_orgindata(debug=False):
     if debug:
         sql_stocklist += " and code in ('002717','601888','002405')"
     df = pd.read_sql_query(sql_stocklist, engine)
+    codes = df['code'].unique()
     # 增加技术指标
     df = add_volatility(df)
     df = get_technique(df)
-    return df
+    return df, codes
 
 
 def get_today(split=0.2,
