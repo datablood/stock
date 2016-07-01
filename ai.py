@@ -72,7 +72,7 @@ if __name__ == "__main__":
             policy_trainer.train(timesteps=timesteps,
                                  data_dim=data_dim,
                                  datatype=datatype,
-                                 debug=True,
+                                 debug=False,
                                  nb_epoch=nb_epoch,
                                  predict_days=2,
                                  batch_size=16)

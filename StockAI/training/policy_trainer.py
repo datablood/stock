@@ -47,9 +47,9 @@ def train(timesteps=15,
     df, codes = trade.get_hist_orgindata(debug)
     split = 0.3
     n_codes = len(codes)
-    n_train_codes = int(np.round(split * n_codes))
-    train_codes = codes[0:n_train_codes]
-    valid_codes = codes[n_train_codes:n_codes]
+    n_valid_codes = int(np.round(split * n_codes))
+    valid_codes = codes[0:n_valid_codes]
+    train_codes = codes[n_valid_codes:n_codes]
     df_train = df[[xcode in train_codes for xcode in df.code]]
     df_valid = df[[xcode in valid_codes for xcode in df.code]]
     del df

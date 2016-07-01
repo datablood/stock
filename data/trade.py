@@ -20,7 +20,6 @@ def get_hist_generator(seg_len=3,
         log = logger.log
         X_batch = []
         Y_batch = []
-        log.info('begin generate train data and validate data.')
         begin_time = time.clock()
         k = 0
         predict_days = predict_days
