@@ -40,10 +40,9 @@ def train(timesteps=15,
           batch_size=32):
     USER_HOME = os.environ['HOME']
     log = logger.log
-    network = policy.LSTMPolicy.create_network(data_dim=data_dim,
+    network = policy.MIXPolicy.create_network(data_dim=data_dim,
                                                timesteps=timesteps)
 
-    datatype = 'lstm'
     df = trade.get_hist_orgindata(debug)
     train_generator = trade.get_hist_generator(seg_len=timesteps,
                                                datatype=datatype,

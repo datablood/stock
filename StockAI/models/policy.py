@@ -1,7 +1,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout, Flatten
 from keras.layers import GRU, LSTM
-from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers import Convolution2D, MaxPooling2D, Convolution1D, MaxPooling1D
 from keras.optimizers import SGD
 from keras.utils import np_utils
 from keras.layers.advanced_activations import LeakyReLU, PReLU, ELU, SReLU
@@ -83,9 +83,61 @@ class CNNPolicy:
         network.add(Activation('sigmoid'))
 
         sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
-        network.compile(optimizer='sgd',
+        # network.compile(optimizer='sgd',
+        #                 loss='binary_crossentropy',
+        #                 metrics=['accuracy'])
+        network.compile(optimizer='rmsprop',
                         loss='binary_crossentropy',
                         metrics=['accuracy'])
+        return network
+
+
+class MIXPolicy:
+    @staticmethod
+    def create_network(**kwargs):
+        defaults = {
+            'timesteps': 128,
+            'data_dim': 14,
+            'nb_filter': 64,
+            'filter_length': 3,
+            'pool_length': 2
+        }
+        params = defaults
+        params.update(**kwargs)
+
+        network = Sequential()
+
+        network.add(Convolution1D(nb_filter=params['nb_filter'],
+                                  filter_length=params['filter_length'],
+                                  border_mode='valid',
+                                  activation='relu',
+                                  subsample_length=1,
+                                  input_shape=(params['timesteps'], params[
+                                      'data_dim'])))
+        network.add(MaxPooling1D(pool_length=params['pool_length']))
+        network.add(Dropout(0.5))
+
+        network.add(Convolution1D(nb_filter=params['nb_filter'],
+                                  filter_length=params['filter_length'],
+                                  border_mode='valid',
+                                  activation='relu',
+                                  subsample_length=1))
+        network.add(MaxPooling1D(pool_length=params['pool_length']))
+        network.add(Dropout(0.5))
+
+
+
+        # network.add(Flatten())
+        # # Note: Keras does automatic shape inference.
+        # network.add(Dense(params['nb_filter'] * 4))
+        # network.add(Activation('relu'))
+        # network.add(Dropout(0.25))
+
+        network.add(LSTM(128))
+        network.add(Dropout(0.15))
+        network.add(Dense(1))
+        network.add(Activation('sigmoid'))
+
         network.compile(optimizer='rmsprop',
                         loss='binary_crossentropy',
                         metrics=['accuracy'])

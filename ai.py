@@ -15,7 +15,7 @@ def predict_today(datatype, timesteps, data_dim=15):
                                                           datatype=datatype,
                                                           split=0.1,
                                                           debug=False)
-    network = policy.LSTMPolicy.create_network(timesteps=timesteps,
+    network = policy.MIXPolicy.create_network(timesteps=timesteps,
                                                data_dim=data_dim)
     USER_HOME = os.environ['HOME']
     out_directory_path = USER_HOME + '/dw/'
