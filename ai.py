@@ -64,10 +64,10 @@ if __name__ == "__main__":
             # nb_classes = 5
             datatype = 'lstm'
 
-            nb_epoch = 72
+            nb_epoch = 30
             if int(time.strftime('%w')) == 5:
                 log.info('今天是周五，进行长期训练')
-                nb_epoch = 288
+                nb_epoch = 128
 
             policy_trainer.train(timesteps=timesteps,
                                  data_dim=data_dim,
