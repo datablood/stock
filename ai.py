@@ -75,7 +75,7 @@ if __name__ == "__main__":
                                  debug=False,
                                  nb_epoch=nb_epoch,
                                  predict_days=2,
-                                 batch_size=16)
+                                 batch_size=64)
             log.info('训练完成,cost time : %s', time.clock() - t_time)
 
             log.info('正在预测数据')
