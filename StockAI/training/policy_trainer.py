@@ -41,7 +41,7 @@ def train(timesteps=15,
           batch_size=32):
     USER_HOME = os.environ['HOME']
     log = logger.log
-    network = policy.MIXPolicy.create_network(data_dim=data_dim,
+    network = policy.LSTMPolicy.create_network(data_dim=data_dim,
                                               timesteps=timesteps)
 
     df, codes = trade.get_hist_orgindata(debug)

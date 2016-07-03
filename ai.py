@@ -5,7 +5,7 @@ from util import dateu as du
 import os
 import time
 from StockAI.models import policy
-from data import trade,statics
+from data import trade, statics
 from db.db import Db
 import pandas as pd
 from StockAI.training import policy_trainer
@@ -21,8 +21,8 @@ def predict_today(datatype, timesteps, data_dim=15):
                                                           datatype=datatype,
                                                           split=0.1,
                                                           debug=False)
-    network = policy.MIXPolicy.create_network(timesteps=timesteps,
-                                              data_dim=data_dim)
+    network = policy.LSTMPolicy.create_network(timesteps=timesteps,
+                                               data_dim=data_dim)
     USER_HOME = os.environ['HOME']
     out_directory_path = USER_HOME + '/dw/'
     meta_file = os.path.join(out_directory_path, 'metadata.json')
@@ -54,7 +54,8 @@ if __name__ == "__main__":
     })
     log = logger.log
     try:
-        if (not du.is_holiday(time.strftime("%Y-%m-%d", time.localtime(time.time())))):
+        if (not du.is_holiday(time.strftime("%Y-%m-%d", time.localtime(
+                time.time())))):
             t_time = time.clock()
             log.info('今天是工作日正在进行训练数据')
             log.info('开始训练数据')
@@ -64,10 +65,10 @@ if __name__ == "__main__":
             # nb_classes = 5
             datatype = 'lstm'
 
-            nb_epoch = 30
+            nb_epoch = 72
             if int(time.strftime('%w')) == 5:
                 log.info('今天是周五，进行长期训练')
-                nb_epoch = 128
+                nb_epoch = 228
 
             policy_trainer.train(timesteps=timesteps,
                                  data_dim=data_dim,
@@ -75,7 +76,7 @@ if __name__ == "__main__":
                                  debug=False,
                                  nb_epoch=nb_epoch,
                                  predict_days=2,
-                                 batch_size=64)
+                                 batch_size=32)
             log.info('训练完成,cost time : %s', time.clock() - t_time)
 
             log.info('正在预测数据')
