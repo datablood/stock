@@ -140,6 +140,54 @@ def get_hist_orgindata(debug=False):
     return df, codes
 
 
+def get_predict(debug=False):
+    db = Db()
+    engine = db._get_engine()
+    sql_stocklist = "select * from predicts where datain_date in(select  max(datain_date) from predicts) order by predict desc"
+    if debug:
+        pass
+    df = pd.read_sql_query(sql_stocklist, engine)
+
+    headpredict = df.head(2)
+    psummery = df.describe().T
+    psummery.columns = ['p_cnt','p_mean','p_std','p_min','p25','p50','p75','p_max']
+    return psummery, headpredict
+
+
+def get_predict_acc1(debug=False):
+    db = Db()
+    engine = db._get_engine()
+    sql_tradehist = "select code,name,p_change from trade_hist where code in (select code from predict_head where c_yearmonthday in (select max(c_yearmonthday) from predict_head) ) order by c_yearmonthday desc"
+    sql_predicthead = "select code,predict from predict_head order by c_yearmonthday desc"
+    if debug:
+        pass
+    df_trade = pd.read_sql_query(sql_tradehist, engine).head(2)
+    df_predict = pd.read_sql_query(sql_predicthead, engine).head(2)
+    df= pd.merge(df_trade,df_predict,on='code')
+    df['acc']=(df.p_change).astype(int)
+    return df
+
+
+def get_predict_acc2(debug=False):
+    db = Db()
+    engine = db._get_engine()
+    sql_stocklist = "select  * from acc1"
+    if debug:
+        pass
+    df = pd.read_sql_query(sql_stocklist, engine)
+    acc2 = df.sort_values('c_yearmonthday', ascending=0)
+    acc2 = acc2.head(2)
+    acc2 = acc2.groupby('c_yearmonthday').sum()
+
+    acc2_final = pd.DataFrame()
+    acc2_final['h_p_acc'] = [df['acc'].sum() / float(df['acc'].count())]
+    acc2_final['h_p_change'] = [df['p_change'].sum()]
+    acc2_final['p_acc']=[acc2['acc'].sum()/2.0]
+    acc2_final['p_change']=[acc2['p_change'].sum()]
+
+    return acc2_final
+
+
 def get_today(split=0.2,
               seg_len=3,
               debug=False,

@@ -5,7 +5,7 @@ from util import dateu as du
 import os
 import time
 from StockAI.models import policy
-from data import trade
+from data import trade,statics
 from db.db import Db
 import pandas as pd
 from StockAI.training import policy_trainer
@@ -82,6 +82,10 @@ if __name__ == "__main__":
             p_time = time.clock()
             predict_today(datatype, timesteps, data_dim=data_dim)
             log.info('预测完成,cost time:%s', time.clock() - p_time)
+            log.info('正在抽取预测统计数据')
+            statics.insert_predict_statics()
+            log.info('抽取预测统计数据完成')
+
         else:
             log.info('今天是假期，正在进行多次迭代')
     except Exception, e:

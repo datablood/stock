@@ -8,6 +8,7 @@ from stock import trading as td
 from db.db import Db
 from util import dateu as du
 from util import logger
+from data import statics
 import os
 import pandas as pd
 '''
@@ -106,6 +107,9 @@ if __name__ == "__main__":
             stock.insert_today_trade()
             stock.insert_hist_trade()
             log.info('同步完成')
+            log.info('开始统计准确率')
+            statics.insert_predict_acc()
+            log.info('统计准确率完成')
         else:
             log.info('今天是假期，不进行同步数据')
     except Exception, e:
